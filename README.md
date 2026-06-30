@@ -4,7 +4,7 @@ Sistema de agenda para consultorio medico construido con Django, MySQL y Bootstr
 
 ## Requisitos
 
-- Python 3.12
+- Python 3.10 o superior
 - MySQL en ejecucion
 - Base de datos disponible para las credenciales definidas en `.env`
 
