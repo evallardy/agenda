@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Perfil medico | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 p-lg-5">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                    <div>
+                        <h1 class="h3 mb-1">Perfil del medico</h1>
+                        <p class="text-secondary mb-0">Esta informacion se mostrara a los pacientes en el inicio, el panel y la solicitud de cita.</p>
+                    </div>
+                    <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'core:dashboard' %}" data-bs-toggle="tooltip" data-bs-title="Volver al panel" aria-label="Volver al panel"><i class="bi bi-arrow-left"></i></a>
+                </div>
+                <form method="post" enctype="multipart/form-data" class="row g-3">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="col-md-6 {% if field.name == 'profile_bio' or field.name == 'photo' %}col-12{% endif %}">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <div class="col-12 d-flex gap-3 pt-2">
+                        <button class="btn btn-success icon-action-btn" type="submit" data-bs-toggle="tooltip" data-bs-title="Guardar perfil" aria-label="Guardar perfil"><i class="bi bi-save"></i></button>
+                        <a class="btn btn-outline-dark icon-action-btn" href="{% url 'core:dashboard' %}" data-bs-toggle="tooltip" data-bs-title="Cancelar" aria-label="Cancelar"><i class="bi bi-x-circle"></i></a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

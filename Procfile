@@ -1,0 +1,1 @@
+web: gunicorn agenda.wsgi:application --config gunicorn.conf.py

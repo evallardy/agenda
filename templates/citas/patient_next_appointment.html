@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Mi siguiente cita | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card panel-surface rounded-4">
+            <div class="card-body p-4 p-lg-5">
+                <div class="section-heading mb-4">
+                    <div>
+                        <span class="section-kicker">Seguimiento</span>
+                        <h1 class="h3 mb-0">Mi siguiente cita</h1>
+                    </div>
+                    <a class="btn btn-outline-dark btn-sm" href="{% url 'citas:patient-request' %}">Solicitar otra fecha</a>
+                </div>
+                {% if next_appointment %}
+                    <div class="context-card d-flex gap-3 align-items-start rounded-4 p-3 mb-4">
+                        {% if next_appointment.doctor.photo %}
+                            <img src="{{ next_appointment.doctor.photo.url }}" alt="Foto del medico" class="doctor-photo doctor-photo-sm flex-shrink-0">
+                        {% else %}
+                            <div class="doctor-photo doctor-photo-sm doctor-photo-placeholder flex-shrink-0">Dr</div>
+                        {% endif %}
+                        <div>
+                            <h2 class="h5 mb-1">{{ next_appointment.doctor.full_name }}</h2>
+                            <p class="text-secondary mb-0">{{ next_appointment.doctor.specialties|default:'Especialidades por definir' }}</p>
+                        </div>
+                    </div>
+                    <div class="soft-panel rounded-4 p-4 mb-4">
+                        <p class="mb-2"><strong>Fecha:</strong> {{ next_appointment.date|date:'d/m/Y' }}</p>
+                        <p class="mb-2"><strong>Horario:</strong> {{ next_appointment.start_time|time:'H:i' }} - {{ next_appointment.end_time|time:'H:i' }}</p>
+                        <p class="mb-2"><strong>Estado:</strong> {{ next_appointment.get_status_display }}</p>
+                        {% if next_appointment.is_in_progress %}
+                            <p class="mb-2 text-secondary"><strong>Seguimiento:</strong> Tu cita ya esta en curso.</p>
+                        {% elif not next_appointment.can_be_cancelled and next_appointment.status != 'cancelada_medico' and next_appointment.status != 'cancelada_paciente' and next_appointment.status != 'atendida' %}
+                            <p class="mb-2 text-secondary"><strong>Seguimiento:</strong> Ya no se puede cancelar.</p>
+                        {% endif %}
+                        {% if next_appointment.reason %}<p class="mb-0"><strong>Motivo:</strong> {{ next_appointment.reason }}</p>{% endif %}
+                    </div>
+                    <div class="d-flex flex-column flex-sm-row gap-3">
+                        {% if next_appointment.can_be_cancelled %}
+                            <form method="post" action="{% url 'citas:patient-cancel' %}">
+                                {% csrf_token %}
+                                <button class="btn btn-outline-danger" type="submit">Cancelar esta cita</button>
+                            </form>
+                        {% else %}
+                            <span class="btn btn-outline-secondary disabled">Ya no se puede cancelar</span>
+                        {% endif %}
+                        <a class="btn btn-outline-dark" target="_blank" href="{% url 'citas:appointment-print' next_appointment.pk %}">Imprimir cita</a>
+                    </div>
+                {% else %}
+                    <div class="empty-state rounded-4 p-4 text-center">
+                        <span class="section-kicker mb-2">Agenda personal</span>
+                        <p class="text-secondary mb-3">No tienes una cita futura registrada.</p>
+                        <a class="btn btn-primary" href="{% url 'citas:patient-request' %}">Solicitar cita</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

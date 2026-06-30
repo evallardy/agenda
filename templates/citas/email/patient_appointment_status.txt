@@ -1,0 +1,15 @@
+Hola {{ patient.full_name }},
+
+Tu cita con {{ doctor.full_name }} fue actualizada.
+
+Fecha: {{ appointment.date|date:'d/m/Y' }}
+Horario: {{ appointment.start_time|time:'H:i' }} - {{ appointment.end_time|time:'H:i' }}
+Estado: {{ status_label }}
+{% if appointment.doctor_cancellation_reason %}
+
+Explicacion del medico:
+{{ appointment.doctor_cancellation_reason }}
+{% endif %}
+
+Puedes imprimir el comprobante aqui:
+{{ appointment_print_url }}

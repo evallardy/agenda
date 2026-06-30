@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Configurar agenda | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card panel-surface h-100">
+            <div class="card-body p-4 p-lg-5">
+                <span class="section-kicker">Configuracion</span>
+                <h1 class="h3 mb-3">Configurar agenda</h1>
+                <p class="text-secondary">Aplica el mismo horario a varios dias y define la duracion fija de la consulta.</p>
+                <form method="post" class="row g-3">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="col-12">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    <div class="col-12 d-flex justify-content-end">
+                        <button class="btn btn-primary icon-action-btn" type="submit" data-bs-toggle="tooltip" data-bs-title="Guardar configuracion" aria-label="Guardar configuracion"><i class="bi bi-save"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card panel-surface h-100">
+            <div class="card-body p-4 p-lg-5">
+                <span class="section-kicker">Disponibilidad</span>
+                <h2 class="h4 mb-3">Horarios vigentes</h2>
+                {% if business_hours %}
+                    <div class="d-grid gap-3">
+                        {% for item in business_hours %}
+                            <div class="subtle-list-item d-flex justify-content-between align-items-center flex-wrap gap-3 rounded-4 p-3 {% if not item.active %}opacity-50{% endif %}">
+                                <div>
+                                    <strong>{{ item.get_weekday_display }}</strong>
+                                    <div class="text-secondary">{{ item.start_time|time:'H:i' }} - {{ item.end_time|time:'H:i' }}</div>
+                                </div>
+                                {% if item.active %}
+                                    <form method="post" action="{% url 'citas:doctor-schedule-disable' item.pk %}">
+                                        {% csrf_token %}
+                                        <button class="btn btn-outline-danger btn-sm icon-action-btn" type="submit" data-bs-toggle="tooltip" data-bs-title="Desactivar" aria-label="Desactivar"><i class="bi bi-power"></i></button>
+                                    </form>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">Inactivo</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-secondary mb-0">Aun no hay horarios cargados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

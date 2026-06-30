@@ -1,0 +1,11 @@
+Hola {{ patient.full_name }},
+
+Tu cita fue registrada con {{ doctor.full_name }}.
+
+Fecha: {{ appointment.date|date:'d/m/Y' }}
+Horario: {{ appointment.start_time|time:'H:i' }} - {{ appointment.end_time|time:'H:i' }}
+Estado: {{ appointment.get_status_display }}
+{% if appointment.reason %}Motivo: {{ appointment.reason }}
+{% endif %}
+Puedes imprimir el comprobante aqui:
+{{ appointment_print_url }}

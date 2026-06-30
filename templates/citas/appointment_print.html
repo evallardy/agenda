@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Imprimir cita</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f6f8fb; color: #22313f; }
+        .print-card { max-width: 900px; margin: 2rem auto; background: white; border-radius: 24px; padding: 2rem; box-shadow: 0 18px 40px rgba(0,0,0,0.08); }
+        .doctor-photo { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; }
+        .doctor-fallback { width: 96px; height: 96px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #183153; color: white; font-weight: bold; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .print-card { margin: 0; box-shadow: none; max-width: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-card">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+            <div class="d-flex gap-3 align-items-center">
+                {% if appointment.doctor.photo %}
+                    <img src="{{ appointment.doctor.photo.url }}" alt="Foto del medico" class="doctor-photo">
+                {% else %}
+                    <div class="doctor-fallback">Dr</div>
+                {% endif %}
+                <div>
+                    <h1 class="h3 mb-1">Comprobante de cita</h1>
+                    <div class="text-secondary">{{ appointment.doctor.full_name }}</div>
+                    <div class="text-secondary">{{ appointment.doctor.specialties|default:'Especialidades por definir' }}</div>
+                </div>
+            </div>
+            <button class="btn btn-outline-dark no-print" onclick="window.print()">Imprimir</button>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="border rounded-4 p-3 h-100">
+                    <h2 class="h5 mb-3">Datos de la cita</h2>
+                    <p class="mb-2"><strong>Fecha:</strong> {{ appointment.date|date:'d/m/Y' }}</p>
+                    <p class="mb-2"><strong>Horario:</strong> {{ appointment.start_time|time:'H:i' }} - {{ appointment.end_time|time:'H:i' }}</p>
+                    <p class="mb-2"><strong>Estado:</strong> {{ appointment.get_status_display }}</p>
+                    {% if appointment.is_in_progress %}
+                        <p class="mb-2 text-secondary"><strong>Seguimiento:</strong> En curso, ya no cancelable.</p>
+                    {% elif not appointment.can_be_cancelled and appointment.status != 'cancelada_medico' and appointment.status != 'cancelada_paciente' and appointment.status != 'atendida' %}
+                        <p class="mb-2 text-secondary"><strong>Seguimiento:</strong> Ya no cancelable.</p>
+                    {% endif %}
+                    {% if appointment.reason %}<p class="mb-0"><strong>Motivo:</strong> {{ appointment.reason }}</p>{% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded-4 p-3 h-100">
+                    <h2 class="h5 mb-3">Paciente</h2>
+                    <p class="mb-2"><strong>Nombre:</strong> {{ appointment.patient.full_name }}</p>
+                    <p class="mb-2"><strong>Correo:</strong> {{ appointment.patient.email }}</p>
+                    <p class="mb-0"><strong>Celular:</strong> {{ appointment.patient.phone }}</p>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="border rounded-4 p-3">
+                    <h2 class="h5 mb-3">Consultorio</h2>
+                    <p class="mb-2"><strong>Nombre:</strong> {{ appointment.doctor.office_name|default:'Consultorio por definir' }}</p>
+                    <p class="mb-2"><strong>Ubicacion:</strong> {{ appointment.doctor.office_address|default:'Ubicacion por definir' }}</p>
+                    {% if appointment.doctor.professional_license %}<p class="mb-0"><strong>Cedula:</strong> {{ appointment.doctor.professional_license }}</p>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

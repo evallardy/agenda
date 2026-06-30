@@ -1,0 +1,8 @@
+.env
+.env.development
+.env.production
+.venv/
+.venv_portability_check/
+__pycache__/
+*.pyc
+staticfiles/

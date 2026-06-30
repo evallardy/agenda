@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Revisar cita | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card panel-surface rounded-4">
+            <div class="card-body p-4 p-lg-5">
+                <div class="section-heading mb-4">
+                    <div>
+                        <span class="section-kicker">Revision medica</span>
+                        <h1 class="h3 mb-0">Detalle de la cita</h1>
+                    </div>
+                    <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'citas:doctor-pending' %}" data-bs-toggle="tooltip" data-bs-title="Volver" aria-label="Volver"><i class="bi bi-arrow-left"></i></a>
+                </div>
+                <div class="soft-panel rounded-4 p-4 mb-4">
+                    <div class="d-flex gap-3 align-items-start mb-3">
+                        {% if appointment.doctor.photo %}
+                            <img src="{{ appointment.doctor.photo.url }}" alt="Foto del medico" class="doctor-photo doctor-photo-sm flex-shrink-0">
+                        {% else %}
+                            <div class="doctor-photo doctor-photo-sm doctor-photo-placeholder flex-shrink-0">Dr</div>
+                        {% endif %}
+                        <div>
+                            <h2 class="h5 mb-1">{{ appointment.doctor.full_name }}</h2>
+                            <p class="text-secondary mb-0">{{ appointment.doctor.specialties|default:'Especialidades por definir' }}</p>
+                        </div>
+                    </div>
+                    <p class="mb-2"><strong>Paciente:</strong> {{ appointment.patient.full_name }}</p>
+                    <p class="mb-2"><strong>Correo:</strong> {{ appointment.patient.email }}</p>
+                    <p class="mb-2"><strong>Celular:</strong> {{ appointment.patient.phone }}</p>
+                    <p class="mb-2"><strong>Fecha:</strong> {{ appointment.date|date:'d/m/Y' }}</p>
+                    <p class="mb-2"><strong>Horario:</strong> {{ appointment.start_time|time:'H:i' }} - {{ appointment.end_time|time:'H:i' }}</p>
+                    <p class="mb-2"><strong>Estado:</strong> {{ appointment.get_status_display }}</p>
+                    {% if appointment.reason %}<p class="mb-0"><strong>Motivo:</strong> {{ appointment.reason }}</p>{% endif %}
+                    {% if appointment.doctor_cancellation_reason %}<p class="mb-0 mt-2"><strong>Explicacion de cancelacion:</strong> {{ appointment.doctor_cancellation_reason }}</p>{% endif %}
+                </div>
+                <div class="icon-action-toolbar">
+                    {% if appointment.status == 'pendiente' %}
+                        <form method="post" action="{% url 'citas:doctor-decision' appointment.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="confirm">
+                            <button class="btn btn-success icon-action-btn" type="submit" data-bs-toggle="tooltip" data-bs-title="Confirmar cita" aria-label="Confirmar cita"><i class="bi bi-check2-circle"></i></button>
+                        </form>
+                        {% if appointment.can_be_cancelled %}
+                            <button class="btn btn-outline-danger icon-action-btn" type="button" data-bs-toggle="modal" data-bs-target="#cancelAppointmentModal" data-action-tooltip="true" data-bs-title="Rechazar cita" aria-label="Rechazar cita"><i class="bi bi-x-octagon"></i></button>
+                        {% endif %}
+                    {% elif appointment.status == 'confirmada' %}
+                        {% if appointment.can_be_cancelled %}
+                            <button class="btn btn-outline-danger icon-action-btn" type="button" data-bs-toggle="modal" data-bs-target="#cancelAppointmentModal" data-action-tooltip="true" data-bs-title="Cancelar cita" aria-label="Cancelar cita"><i class="bi bi-calendar-x"></i></button>
+                        {% endif %}
+                    {% endif %}
+                    <a class="btn btn-outline-primary icon-action-btn" href="{% url 'clinico:record-update' appointment.pk %}?next={{ request.get_full_path|urlencode }}" data-bs-toggle="tooltip" data-bs-title="Abrir cardex clinico" aria-label="Abrir cardex clinico"><i class="bi bi-clipboard2-pulse"></i></a>
+                    <a class="btn btn-outline-info icon-action-btn" href="{% url 'clinico:patient-history' appointment.patient.pk %}" data-bs-toggle="tooltip" data-bs-title="Historial del paciente" aria-label="Historial del paciente"><i class="bi bi-journal-medical"></i></a>
+                    <a class="btn btn-outline-secondary icon-action-btn" href="{{ print_url }}" target="_blank" data-bs-toggle="tooltip" data-bs-title="Imprimir cita" aria-label="Imprimir cita"><i class="bi bi-printer"></i></a>
+                </div>
+                {% if not appointment.can_be_cancelled and appointment.status != 'cancelada_medico' and appointment.status != 'cancelada_paciente' and appointment.status != 'atendida' %}
+                    {% if appointment.is_in_progress %}
+                        <p class="text-secondary small mt-3 mb-0">En curso, ya no cancelable.</p>
+                    {% else %}
+                        <p class="text-secondary small mt-3 mb-0">La cancelacion solo esta disponible antes de la hora de inicio de la cita.</p>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if appointment.can_be_cancelled %}
+    <div class="modal fade" id="cancelAppointmentModal" tabindex="-1" aria-labelledby="cancelAppointmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0">
+                    <h2 class="modal-title h5 mb-0" id="cancelAppointmentModalLabel">{% if appointment.status == 'pendiente' %}Rechazar cita{% else %}Cancelar cita{% endif %}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form method="post" action="{% url 'citas:doctor-decision' appointment.pk %}">
+                    <div class="modal-body pt-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="cancel">
+                        <p class="text-secondary">{% if appointment.status == 'pendiente' %}Indica al paciente por que se rechaza esta solicitud.{% else %}Indica al paciente por que se esta cancelando la cita.{% endif %}</p>
+                        <label class="form-label" for="doctor-cancellation-reason">Explicacion</label>
+                        <textarea class="form-control" id="doctor-cancellation-reason" name="cancellation_reason" rows="4" required placeholder="{% if appointment.status == 'pendiente' %}Ej. Ya no tengo disponibilidad en ese horario, por favor solicita una nueva fecha.{% else %}Ej. Surgio una urgencia medica y necesito reprogramar su cita.{% endif %}"></textarea>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-outline-dark icon-action-btn" data-bs-dismiss="modal" data-bs-toggle="tooltip" data-bs-title="Cerrar" aria-label="Cerrar"><i class="bi bi-x-circle"></i></button>
+                        <button type="submit" class="btn btn-danger icon-action-btn" data-bs-toggle="tooltip" data-bs-title="{% if appointment.status == 'pendiente' %}Confirmar rechazo{% else %}Confirmar cancelacion{% endif %}" aria-label="{% if appointment.status == 'pendiente' %}Confirmar rechazo{% else %}Confirmar cancelacion{% endif %}"><i class="bi bi-check2-square"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

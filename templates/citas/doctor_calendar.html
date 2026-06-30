@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% block title %}Calendario medico | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="card panel-surface rounded-4">
+    <div class="card-body p-4 p-lg-5">
+        <div class="section-heading mb-4">
+            <div>
+                <span class="section-kicker">Agenda del medico</span>
+                <h1 class="h3 mb-1">Calendario de trabajo</h1>
+                {% if calendar_view == 'month' %}
+                    <p class="text-secondary mb-0">{{ month_label }}</p>
+                {% elif calendar_view == 'week' %}
+                    <p class="text-secondary mb-0">Semana {{ week_label }}</p>
+                {% else %}
+                    <p class="text-secondary mb-0">{{ day_label }}</p>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2 flex-wrap justify-content-lg-end">
+                {% if calendar_view == 'month' %}
+                    <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'citas:doctor-calendar' %}?view=month&month={{ previous_month|date:'Y-m' }}" data-bs-toggle="tooltip" data-bs-title="Anterior" aria-label="Anterior"><i class="bi bi-chevron-left"></i></a>
+                    <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'citas:doctor-calendar' %}?view=month&month={{ next_month|date:'Y-m' }}" data-bs-toggle="tooltip" data-bs-title="Siguiente" aria-label="Siguiente"><i class="bi bi-chevron-right"></i></a>
+                {% elif calendar_view == 'week' %}
+                    <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'citas:doctor-calendar' %}?view=week&date={{ previous_week_date|date:'Y-m-d' }}" data-bs-toggle="tooltip" data-bs-title="Anterior" aria-label="Anterior"><i class="bi bi-chevron-left"></i></a>
+                    <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'citas:doctor-calendar' %}?view=week&date={{ next_week_date|date:'Y-m-d' }}" data-bs-toggle="tooltip" data-bs-title="Siguiente" aria-label="Siguiente"><i class="bi bi-chevron-right"></i></a>
+                {% else %}
+                    <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'citas:doctor-calendar' %}?view=day&date={{ previous_day_date|date:'Y-m-d' }}" data-bs-toggle="tooltip" data-bs-title="Anterior" aria-label="Anterior"><i class="bi bi-chevron-left"></i></a>
+                    <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'citas:doctor-calendar' %}?view=day&date={{ next_day_date|date:'Y-m-d' }}" data-bs-toggle="tooltip" data-bs-title="Siguiente" aria-label="Siguiente"><i class="bi bi-chevron-right"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="context-card rounded-4 p-3 p-lg-4 mb-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn {% if calendar_view == 'month' %}btn-primary{% else %}btn-outline-dark{% endif %} btn-sm icon-action-btn" href="{% url 'citas:doctor-calendar' %}?view=month&month={{ current_month|date:'Y-m' }}" data-bs-toggle="tooltip" data-bs-title="Mes" aria-label="Mes"><i class="bi bi-calendar-month"></i></a>
+                    <a class="btn {% if calendar_view == 'week' %}btn-primary{% else %}btn-outline-dark{% endif %} btn-sm icon-action-btn" href="{% url 'citas:doctor-calendar' %}?view=week&date={{ current_date|date:'Y-m-d' }}" data-bs-toggle="tooltip" data-bs-title="Semana" aria-label="Semana"><i class="bi bi-calendar-week"></i></a>
+                    <a class="btn {% if calendar_view == 'day' %}btn-primary{% else %}btn-outline-dark{% endif %} btn-sm icon-action-btn" href="{% url 'citas:doctor-calendar' %}?view=day&date={{ current_date|date:'Y-m-d' }}" data-bs-toggle="tooltip" data-bs-title="Dia" aria-label="Dia"><i class="bi bi-calendar-day"></i></a>
+                </div>
+                {% if calendar_view == 'month' %}
+                    <form method="get" class="d-flex gap-2">
+                        <input type="hidden" name="view" value="month">
+                        <input class="form-control" type="month" name="month" value="{{ current_month|date:'Y-m' }}">
+                        <button class="btn btn-outline-dark icon-action-btn" type="submit" data-bs-toggle="tooltip" data-bs-title="Cambiar" aria-label="Cambiar"><i class="bi bi-arrow-repeat"></i></button>
+                    </form>
+                {% else %}
+                    <form method="get" class="d-flex gap-2">
+                        <input type="hidden" name="view" value="{{ calendar_view }}">
+                        <input class="form-control" type="date" name="date" value="{{ current_date|date:'Y-m-d' }}">
+                        <button class="btn btn-outline-dark icon-action-btn" type="submit" data-bs-toggle="tooltip" data-bs-title="Cambiar" aria-label="Cambiar"><i class="bi bi-arrow-repeat"></i></button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if calendar_view == 'month' %}
+            <div class="table-responsive">
+                <table class="table table-bordered calendar-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Lun</th>
+                            <th>Mar</th>
+                            <th>Mie</th>
+                            <th>Jue</th>
+                            <th>Vie</th>
+                            <th>Sab</th>
+                            <th>Dom</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for week in weeks %}
+                            <tr>
+                                {% for day in week %}
+                                    <td class="calendar-day">
+                                        {% if day.day %}
+                                            <div class="fw-semibold mb-2 text-primary-emphasis">{{ day.day }}</div>
+                                            {% for appointment in day.appointments %}
+                                                <div class="calendar-pill mb-2 p-3 border rounded-4 bg-white">
+                                                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                                        <div>
+                                                            <div class="fw-semibold">{{ appointment.start_time|time:'H:i' }}</div>
+                                                            <div class="text-secondary small">{{ appointment.patient.full_name }}</div>
+                                                        </div>
+                                                        <span class="status-chip">{{ appointment.get_status_display }}</span>
+                                                    </div>
+                                                    <div class="icon-action-toolbar">
+                                                        <a class="btn btn-primary btn-sm icon-action-btn" href="{% url 'clinico:record-update' appointment.pk %}?next={{ request.get_full_path|urlencode }}" data-bs-toggle="tooltip" data-bs-title="Abrir cardex" aria-label="Abrir cardex"><i class="bi bi-clipboard2-pulse"></i></a>
+                                                        <a class="btn btn-outline-info btn-sm icon-action-btn" href="{% url 'clinico:patient-history' appointment.patient.pk %}" data-bs-toggle="tooltip" data-bs-title="Ver expediente" aria-label="Ver expediente"><i class="bi bi-journal-text"></i></a>
+                                                        <a class="btn btn-outline-secondary btn-sm icon-action-btn" href="{% url 'citas:doctor-review' appointment.pk %}" data-bs-toggle="tooltip" data-bs-title="Ver cita" aria-label="Ver cita"><i class="bi bi-eye"></i></a>
+                                                    </div>
+                                                    {% if appointment.can_be_cancelled %}
+                                                        <div class="mt-2">
+                                                            <a class="btn btn-outline-danger btn-sm icon-action-btn" href="{% url 'citas:doctor-review' appointment.pk %}" data-bs-toggle="tooltip" data-bs-title="Cancelar cita" aria-label="Cancelar cita"><i class="bi bi-calendar-x"></i></a>
+                                                        </div>
+                                                    {% elif appointment.is_in_progress %}
+                                                        <div class="text-secondary small mt-2">En curso, ya no cancelable</div>
+                                                    {% else %}
+                                                        <div class="text-secondary small mt-2">Ya no cancelable</div>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% elif calendar_view == 'week' %}
+            <div class="week-grid-shell overflow-auto">
+                <div class="week-grid" style="--week-slot-count: {{ week_timeline.row_count }};">
+                    <div class="week-grid-corner">Hora</div>
+                    {% for day in week_days %}
+                        <div class="week-grid-day-header" style="grid-column: {{ forloop.counter|add:1 }}; grid-row: 1;">
+                            <div class="week-agenda-heading fw-semibold">{{ day.date|date:'D d/m' }}</div>
+                        </div>
+                    {% endfor %}
+
+                    {% for row in week_timeline.time_rows %}
+                        <div class="week-grid-time{% if not row.is_hour_mark %} week-grid-time-muted{% endif %}" style="grid-column: 1; grid-row: {{ row.grid_row }};">
+                            {{ row.label }}
+                        </div>
+                    {% endfor %}
+
+                    {% for cell in week_timeline.background_cells %}
+                        <div class="week-grid-cell{% if cell.is_hour_mark %} hour-mark{% endif %}" style="grid-column: {{ cell.grid_column }}; grid-row: {{ cell.grid_row }};"></div>
+                    {% endfor %}
+
+                    {% for item in week_timeline.positioned_appointments %}
+                        {% with appointment=item.appointment %}
+                            <div class="week-grid-appointment week-agenda-card border rounded-4 p-3{% if appointment.is_in_progress %} is-live{% elif appointment.can_be_cancelled %} is-open{% else %} is-locked{% endif %}"
+                                 style="grid-column: {{ item.grid_column }}; grid-row: {{ item.grid_row }} / span {{ item.slot_span }}; --lane-index: {{ item.lane_index }}; --lane-count: {{ item.lane_count }};">
+                                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                    <div>
+                                        <div class="fw-semibold">{{ appointment.start_time|time:'H:i' }} - {{ appointment.end_time|time:'H:i' }}</div>
+                                        <div class="text-secondary small">{{ appointment.patient.full_name }}</div>
+                                        {% if appointment.reason %}
+                                            <div class="text-secondary small mt-1">{{ appointment.reason }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <span class="status-chip">{{ appointment.get_status_display }}</span>
+                                </div>
+                                <div class="icon-action-toolbar">
+                                    <a class="btn btn-primary btn-sm icon-action-btn" href="{% url 'clinico:record-update' appointment.pk %}?next={{ request.get_full_path|urlencode }}" data-bs-toggle="tooltip" data-bs-title="Abrir cardex" aria-label="Abrir cardex"><i class="bi bi-clipboard2-pulse"></i></a>
+                                    <a class="btn btn-outline-info btn-sm icon-action-btn" href="{% url 'clinico:patient-history' appointment.patient.pk %}" data-bs-toggle="tooltip" data-bs-title="Ver expediente" aria-label="Ver expediente"><i class="bi bi-journal-text"></i></a>
+                                    <a class="btn btn-outline-secondary btn-sm icon-action-btn" href="{% url 'citas:doctor-review' appointment.pk %}" data-bs-toggle="tooltip" data-bs-title="Ver cita" aria-label="Ver cita"><i class="bi bi-eye"></i></a>
+                                </div>
+                            </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="day-agenda d-grid gap-3">
+                {% for appointment in day_appointments %}
+                    {% ifchanged appointment.start_time|time:'H' %}
+                        <div class="day-agenda-divider" aria-hidden="true">
+                            <span>{{ appointment.start_time|time:'H:00' }}</span>
+                        </div>
+                    {% endifchanged %}
+                    <div class="day-agenda-entry">
+                        <div class="day-agenda-time">
+                            <div class="day-agenda-hour">{{ appointment.start_time|time:'H:i' }}</div>
+                            <div class="day-agenda-range">{{ appointment.start_time|time:'H:i' }} - {{ appointment.end_time|time:'H:i' }}</div>
+                        </div>
+                        <div class="day-agenda-card border rounded-4 p-4 bg-white{% if appointment.is_in_progress %} is-live{% elif appointment.can_be_cancelled %} is-open{% else %} is-locked{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                                <div>
+                                    <div class="h5 mb-1">{{ appointment.patient.full_name }}</div>
+                                    <div class="text-secondary">{{ appointment.patient.email }}</div>
+                                    {% if appointment.reason %}
+                                        <div class="text-secondary small mt-1">Motivo: {{ appointment.reason }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex flex-column align-items-end gap-2">
+                                    <span class="status-chip">{{ appointment.get_status_display }}</span>
+                                    {% if appointment.is_in_progress %}
+                                        <span class="agenda-state-label">En curso</span>
+                                    {% elif appointment.can_be_cancelled %}
+                                        <span class="agenda-state-label">Editable</span>
+                                    {% else %}
+                                        <span class="agenda-state-label">Cerrada</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="icon-action-toolbar">
+                                <a class="btn btn-primary btn-sm icon-action-btn" href="{% url 'clinico:record-update' appointment.pk %}?next={{ request.get_full_path|urlencode }}" data-bs-toggle="tooltip" data-bs-title="Abrir cardex" aria-label="Abrir cardex"><i class="bi bi-clipboard2-pulse"></i></a>
+                                <a class="btn btn-outline-info btn-sm icon-action-btn" href="{% url 'clinico:patient-history' appointment.patient.pk %}" data-bs-toggle="tooltip" data-bs-title="Ver expediente" aria-label="Ver expediente"><i class="bi bi-journal-text"></i></a>
+                                <a class="btn btn-outline-secondary btn-sm icon-action-btn" href="{% url 'citas:doctor-review' appointment.pk %}" data-bs-toggle="tooltip" data-bs-title="Ver cita" aria-label="Ver cita"><i class="bi bi-eye"></i></a>
+                            </div>
+                            {% if appointment.can_be_cancelled %}
+                                <div class="mt-3">
+                                    <a class="btn btn-outline-danger btn-sm icon-action-btn" href="{% url 'citas:doctor-review' appointment.pk %}" data-bs-toggle="tooltip" data-bs-title="Cancelar cita" aria-label="Cancelar cita"><i class="bi bi-calendar-x"></i></a>
+                                </div>
+                            {% elif appointment.is_in_progress %}
+                                <div class="text-secondary small mt-3">En curso, ya no cancelable</div>
+                            {% else %}
+                                <div class="text-secondary small mt-3">Ya no cancelable</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="soft-panel rounded-4 p-4 text-center">
+                        <p class="text-secondary mb-0">No hay citas confirmadas para esta fecha.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

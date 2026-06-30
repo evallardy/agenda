@@ -1,0 +1,6 @@
+Hola {{ user.full_name }},
+
+Para activar tu cuenta en Agenda Consultorio, entra al siguiente enlace:
+{{ verify_url }}
+
+Si no solicitaste esta cuenta, puedes ignorar este correo.

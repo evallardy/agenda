@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Historial clinico | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-10">
+        <div class="card panel-surface rounded-4">
+            <div class="card-body p-4 p-lg-5">
+                <div class="section-heading mb-4">
+                    <div>
+                        <span class="section-kicker">Expediente clinico</span>
+                        <h1 class="h3 mb-1">Historial de {{ patient.full_name }}</h1>
+                        <p class="text-secondary mb-0">{{ patient.email }} | {{ patient.phone }}</p>
+                    </div>
+                    <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'clinico:patient-search' %}" data-bs-toggle="tooltip" data-bs-title="Volver a pacientes" aria-label="Volver a pacientes"><i class="bi bi-arrow-left"></i></a>
+                </div>
+                <div class="context-card rounded-4 p-3 p-lg-4 mb-4">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label" for="history-date-from">Desde</label>
+                            <input class="form-control" id="history-date-from" type="date" name="date_from" value="{{ date_from }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="history-date-to">Hasta</label>
+                            <input class="form-control" id="history-date-to" type="date" name="date_to" value="{{ date_to }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="history-diagnosis">Diagnostico</label>
+                            <input class="form-control" id="history-diagnosis" type="text" name="diagnosis" value="{{ diagnosis_query }}" placeholder="Ej. Faringitis">
+                        </div>
+                        <div class="col-12 d-flex gap-2 flex-wrap">
+                            <button class="btn btn-primary icon-action-btn" type="submit" data-bs-toggle="tooltip" data-bs-title="Aplicar filtros" aria-label="Aplicar filtros"><i class="bi bi-funnel"></i></button>
+                            <a class="btn btn-outline-secondary icon-action-btn" href="{% url 'clinico:patient-history' patient.pk %}" data-bs-toggle="tooltip" data-bs-title="Limpiar" aria-label="Limpiar"><i class="bi bi-eraser"></i></a>
+                        </div>
+                    </form>
+                </div>
+                {% if records %}
+                    <div class="d-grid gap-4">
+                        {% for record in records %}
+                            <div class="soft-panel rounded-4 p-4">
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                                    <div>
+                                        <h2 class="h5 mb-1">{{ record.appointment.date|date:'d/m/Y' }} {{ record.appointment.start_time|time:'H:i' }}</h2>
+                                        <p class="text-secondary mb-0">Motivo: {{ record.appointment.reason|default:'Sin motivo registrado' }}</p>
+                                        <p class="text-secondary mb-0">Estado: {{ record.appointment.get_status_display }}</p>
+                                        {% if record.appointment.is_in_progress %}
+                                            <p class="text-secondary small mb-0">En curso, ya no cancelable.</p>
+                                        {% elif not record.appointment.can_be_cancelled and record.appointment.status != 'cancelada_medico' and record.appointment.status != 'cancelada_paciente' and record.appointment.status != 'atendida' %}
+                                            <p class="text-secondary small mb-0">Ya no cancelable.</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <a class="btn btn-outline-primary btn-sm icon-action-btn" href="{% url 'clinico:record-update' record.appointment.pk %}?next={{ request.get_full_path|urlencode }}" data-bs-toggle="tooltip" data-bs-title="Abrir cardex" aria-label="Abrir cardex"><i class="bi bi-clipboard2-pulse"></i></a>
+                                        {% if record.medications.exists %}
+                                            <a class="btn btn-outline-secondary btn-sm icon-action-btn" target="_blank" href="{% url 'clinico:prescription-print' record.appointment.pk %}" data-bs-toggle="tooltip" data-bs-title="Imprimir receta" aria-label="Imprimir receta"><i class="bi bi-printer"></i></a>
+                                            <a class="btn btn-outline-info btn-sm icon-action-btn" target="_blank" href="{% url 'clinico:prescription-pdf' record.appointment.pk %}" data-bs-toggle="tooltip" data-bs-title="Descargar PDF" aria-label="Descargar PDF"><i class="bi bi-file-earmark-arrow-down"></i></a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <strong>Sintomas</strong>
+                                        <p class="mb-0">{{ record.symptoms|linebreaksbr }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Signos vitales</strong>
+                                        <p class="mb-0">{{ record.vital_signs|linebreaksbr }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Diagnostico</strong>
+                                        <p class="mb-0">{{ record.diagnosis|default:'Sin diagnostico registrado'|linebreaksbr }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Notas</strong>
+                                        <p class="mb-0">{{ record.notes|default:'Sin notas adicionales'|linebreaksbr }}</p>
+                                    </div>
+                                    <div class="col-12">
+                                        <strong>Medicamentos recetados</strong>
+                                        {% if record.medications.exists %}
+                                            <div class="table-responsive mt-2">
+                                                <table class="table align-middle mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Medicamento</th>
+                                                            <th>Cantidad</th>
+                                                            <th>Como se toma</th>
+                                                            <th>Cada cuando</th>
+                                                            <th>Duracion</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for medication in record.medications.all %}
+                                                            <tr>
+                                                                <td>{{ medication.name }}</td>
+                                                                <td>{{ medication.quantity }}</td>
+                                                                <td>{{ medication.dosage }}</td>
+                                                                <td>{{ medication.frequency }}</td>
+                                                                <td>{{ medication.duration_days }} dias</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <p class="text-secondary mb-0 mt-2">No se registraron medicamentos en esta consulta.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="soft-panel rounded-4 p-4 text-center">
+                        <p class="text-secondary mb-0">Este paciente aun no tiene cardex clinicos registrados.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

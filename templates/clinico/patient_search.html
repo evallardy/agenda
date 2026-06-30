@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Buscar expediente | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-10">
+        <div class="card panel-surface rounded-4">
+            <div class="card-body p-4 p-lg-5">
+                <div class="section-heading mb-4">
+                    <div>
+                        <span class="section-kicker">Expediente clinico</span>
+                        <h1 class="h3 mb-0">Buscar paciente</h1>
+                    </div>
+                    <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'core:dashboard' %}" data-bs-toggle="tooltip" data-bs-title="Volver al panel" aria-label="Volver al panel"><i class="bi bi-arrow-left"></i></a>
+                </div>
+                <div class="context-card rounded-4 p-3 p-lg-4 mb-4">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-lg-10">
+                            <label class="form-label" for="patient-search-query">Nombre o correo registrado</label>
+                            <input class="form-control" id="patient-search-query" type="text" name="q" value="{{ query }}" placeholder="Ej. Juan Perez o paciente@correo.com">
+                        </div>
+                        <div class="col-lg-2 d-grid">
+                            <button class="btn btn-primary icon-action-btn ms-auto" type="submit" data-bs-toggle="tooltip" data-bs-title="Buscar" aria-label="Buscar"><i class="bi bi-search"></i></button>
+                        </div>
+                    </form>
+                </div>
+                {% if patients %}
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Paciente</th>
+                                    <th>Correo</th>
+                                    <th>Celular</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for patient in patients %}
+                                    <tr>
+                                        <td>{{ patient.full_name }}</td>
+                                        <td>{{ patient.email }}</td>
+                                        <td>{{ patient.phone }}</td>
+                                        <td class="text-end"><a class="btn btn-outline-primary btn-sm icon-action-btn" href="{% url 'clinico:patient-history' patient.pk %}" data-bs-toggle="tooltip" data-bs-title="Ver historial" aria-label="Ver historial"><i class="bi bi-journal-text"></i></a></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="soft-panel rounded-4 p-4 text-center">
+                        <p class="text-secondary mb-0">No se encontraron pacientes con los criterios actuales.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

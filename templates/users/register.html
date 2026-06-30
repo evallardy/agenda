@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Registro | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="row justify-content-center auth-shell">
+    <div class="col-xl-10">
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-4">
+                <div class="card hero-aside rounded-4 h-100">
+                    <div class="card-body p-4 p-lg-5 d-flex flex-column justify-content-center">
+                        <span class="section-kicker">Nuevo paciente</span>
+                        <h1 class="h3 mb-3">Registro digital del consultorio.</h1>
+                        <p class="text-secondary mb-0">Tu correo sera tu usuario y deberas verificarlo para activar tu acceso.</p>
+                        <div class="soft-divider"></div>
+                        <p class="mb-0">La agenda funciona con bloques exactos de tiempo y confirmacion del medico.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="card auth-card rounded-4 h-100">
+                    <div class="card-body p-4 p-lg-5">
+                        <span class="section-kicker">Alta de cuenta</span>
+                        <h1 class="h3 mb-2">Registro de paciente</h1>
+                        <p class="text-secondary">Completa tus datos para comenzar a solicitar citas.</p>
+                <form method="post" class="row g-3">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="col-12">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    <div class="col-12 d-grid">
+                        <button class="btn btn-primary btn-lg" type="submit">Crear cuenta</button>
+                    </div>
+                </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

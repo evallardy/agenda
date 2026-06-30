@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Solicitudes pendientes | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="card panel-surface rounded-4">
+    <div class="card-body p-4 p-lg-5">
+        <div class="section-heading mb-4">
+            <div>
+                <span class="section-kicker">Gestion diaria</span>
+                <h1 class="h3 mb-0">Solicitudes pendientes</h1>
+            </div>
+            <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'citas:doctor-calendar' %}" data-bs-toggle="tooltip" data-bs-title="Ver calendario" aria-label="Ver calendario"><i class="bi bi-calendar3"></i></a>
+        </div>
+        <div class="context-card rounded-4 p-3 p-lg-4 mb-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+                <div>
+                    <h2 class="h5 mb-1">Filtra por paciente o fecha</h2>
+                    <p class="text-secondary mb-0">Pendientes totales: {{ pending_total }}</p>
+                </div>
+                {% if search_term or selected_date %}
+                    <a class="btn btn-outline-secondary btn-sm icon-action-btn" href="{% url 'citas:doctor-pending' %}" data-bs-toggle="tooltip" data-bs-title="Limpiar filtros" aria-label="Limpiar filtros"><i class="bi bi-eraser"></i></a>
+                {% endif %}
+            </div>
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-lg-7">
+                    <label class="form-label" for="doctor-pending-search">Paciente, correo, celular o motivo</label>
+                    <input class="form-control" id="doctor-pending-search" type="text" name="q" value="{{ search_term }}" placeholder="Ej. Juan Perez o revision anual">
+                </div>
+                <div class="col-lg-3">
+                    <label class="form-label" for="doctor-pending-date">Fecha</label>
+                    <input class="form-control" id="doctor-pending-date" type="date" name="date" value="{{ selected_date }}">
+                </div>
+                <div class="col-lg-2 d-grid">
+                    <button class="btn btn-primary icon-action-btn ms-auto" type="submit" data-bs-toggle="tooltip" data-bs-title="Buscar" aria-label="Buscar"><i class="bi bi-search"></i></button>
+                </div>
+            </form>
+        </div>
+        {% if appointments %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Paciente</th>
+                            <th>Contacto</th>
+                            <th>Motivo</th>
+                            <th>Fecha</th>
+                            <th>Horario</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                            <tr>
+                                <td>{{ appointment.patient.full_name }}</td>
+                                <td>
+                                    <div>{{ appointment.patient.email }}</div>
+                                    <div class="text-secondary small">{{ appointment.patient.phone }}</div>
+                                </td>
+                                <td>{{ appointment.reason|default:'Sin motivo registrado' }}</td>
+                                <td>{{ appointment.date|date:'d/m/Y' }}</td>
+                                <td>{{ appointment.start_time|time:'H:i' }} - {{ appointment.end_time|time:'H:i' }}</td>
+                                <td class="text-end"><a class="btn btn-primary btn-sm icon-action-btn" href="{% url 'citas:doctor-review' appointment.pk %}" data-bs-toggle="tooltip" data-bs-title="Ver detalle" aria-label="Ver detalle"><i class="bi bi-eye"></i></a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="soft-panel rounded-4 p-4 text-center">
+                <p class="text-secondary mb-0">No hay solicitudes pendientes con los filtros actuales.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

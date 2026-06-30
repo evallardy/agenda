@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+{% block title %}Cardex clinico | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-9">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 p-lg-5">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                    <div>
+                        <h1 class="h3 mb-1">Cardex clinico</h1>
+                        <p class="text-secondary mb-0">{{ appointment.patient.full_name }} | {{ appointment.patient.email }} | {{ appointment.date|date:'d/m/Y' }} {{ appointment.start_time|time:'H:i' }}</p>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                           <a class="btn btn-outline-info btn-sm" href="{% url 'clinico:patient-history' appointment.patient.pk %}" data-bs-toggle="tooltip" data-bs-title="Historial del paciente" aria-label="Historial del paciente"><i class="bi bi-journal-medical"></i></a>
+                        {% if record.medications.exists %}
+                               <a class="btn btn-outline-primary btn-sm" target="_blank" href="{% url 'clinico:prescription-print' appointment.pk %}" data-bs-toggle="tooltip" data-bs-title="Imprimir receta" aria-label="Imprimir receta"><i class="bi bi-printer"></i></a>
+                               <a class="btn btn-outline-secondary btn-sm" target="_blank" href="{% url 'clinico:prescription-pdf' appointment.pk %}" data-bs-toggle="tooltip" data-bs-title="Descargar PDF" aria-label="Descargar PDF"><i class="bi bi-file-earmark-arrow-down"></i></a>
+                        {% endif %}
+                           <a class="btn btn-outline-dark btn-sm" href="{{ return_url }}" data-bs-toggle="tooltip" data-bs-title="{{ return_label }}" aria-label="{{ return_label }}"><i class="bi bi-arrow-return-left"></i></a>
+                    </div>
+                </div>
+                <form method="post" class="row g-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ return_url }}">
+                    <div class="col-12">
+                        <label class="form-label">Sintomas</label>
+                        {{ form.symptoms }}
+                        {% for error in form.symptoms.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Signos vitales</label>
+                        {{ form.vital_signs }}
+                        {% for error in form.vital_signs.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Diagnostico</label>
+                        {{ form.diagnosis }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Notas adicionales</label>
+                        {{ form.notes }}
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+                            <div>
+                                <h2 class="h5 mb-1">Medicamentos</h2>
+                                <p class="text-secondary small mb-0">Puedes registrar varios medicamentos en la misma consulta.</p>
+                            </div>
+                            <button class="btn btn-outline-success btn-sm" type="button" id="open-medication-modal" data-bs-toggle="modal" data-bs-target="#medicationModal" data-action-tooltip="true" data-bs-title="Agregar medicamento" aria-label="Agregar medicamento"><i class="bi bi-plus-circle"></i></button>
+                        </div>
+                        {{ formset.management_form }}
+                        <div class="table-responsive mt-2">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Medicamento</th>
+                                        <th>Cantidad</th>
+                                        <th>Como se toma</th>
+                                        <th>Cada cuando</th>
+                                        <th>Duracion</th>
+                                        <th>Indicaciones</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="medication-table-body">
+                                    {% for medication_form in formset %}
+                                        <tr class="medication-summary-item{% if not medication_form.name.value and not medication_form.instance.pk %} d-none{% endif %}" data-form-index="{{ forloop.counter0 }}">
+                                            <td class="medication-summary-name">{{ medication_form.name.value|default:'Medicamento sin nombre' }}</td>
+                                            <td class="medication-summary-quantity">{{ medication_form.quantity.value|default:'Sin cantidad' }}</td>
+                                            <td class="medication-summary-dose">{{ medication_form.dosage.value|default:'Sin dosis' }}</td>
+                                            <td class="medication-summary-frequency">{{ medication_form.frequency.value|default:'Sin frecuencia' }}</td>
+                                            <td class="medication-summary-duration">{{ medication_form.duration_days.value|default:'0' }} dias</td>
+                                            <td class="medication-summary-instructions">{{ medication_form.instructions.value|default:'Sin indicaciones adicionales' }}</td>
+                                            <td class="text-end">
+                                                <div class="d-flex gap-2 flex-wrap justify-content-end">
+                                                    <button class="btn btn-outline-primary btn-sm edit-medication-button" type="button" data-form-index="{{ forloop.counter0 }}" data-bs-toggle="modal" data-bs-target="#medicationModal" data-action-tooltip="true" data-bs-title="Editar medicamento" aria-label="Editar medicamento"><i class="bi bi-pencil-square"></i></button>
+                                                       <button class="btn btn-outline-danger btn-sm remove-medication-button" type="button" data-form-index="{{ forloop.counter0 }}" data-bs-toggle="tooltip" data-bs-title="Eliminar medicamento" aria-label="Eliminar medicamento"><i class="bi bi-trash3"></i></button>
+                                                </div>
+                                                <div class="d-none medication-form-storage">
+                                                    {% for hidden in medication_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                                    {{ medication_form.name }}
+                                                    {{ medication_form.quantity }}
+                                                    {{ medication_form.dosage }}
+                                                    {{ medication_form.frequency }}
+                                                    {{ medication_form.duration_days }}
+                                                    {{ medication_form.instructions }}
+                                                    {{ medication_form.DELETE }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="soft-panel rounded-4 p-4 text-center{% if formset.forms and formset.forms.0.name.value or record.medications.exists %} d-none{% endif %}" id="medication-empty-state">
+                            <p class="text-secondary mb-0">Aun no hay medicamentos agregados en esta consulta.</p>
+                        </div>
+                        <template id="empty-medication-form-template">
+                            <tr class="medication-summary-item d-none" data-form-index="__prefix__">
+                                <td class="medication-summary-name">Medicamento sin nombre</td>
+                                <td class="medication-summary-quantity">Sin cantidad</td>
+                                <td class="medication-summary-dose">Sin dosis</td>
+                                <td class="medication-summary-frequency">Sin frecuencia</td>
+                                <td class="medication-summary-duration">0 dias</td>
+                                <td class="medication-summary-instructions">Sin indicaciones adicionales</td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-2 flex-wrap justify-content-end">
+                                        <button class="btn btn-outline-primary btn-sm edit-medication-button" type="button" data-form-index="__prefix__" data-bs-toggle="modal" data-bs-target="#medicationModal" data-action-tooltip="true" data-bs-title="Editar medicamento" aria-label="Editar medicamento"><i class="bi bi-pencil-square"></i></button>
+                                           <button class="btn btn-outline-danger btn-sm remove-medication-button" type="button" data-form-index="__prefix__" data-bs-toggle="tooltip" data-bs-title="Eliminar medicamento" aria-label="Eliminar medicamento"><i class="bi bi-trash3"></i></button>
+                                    </div>
+                                    <div class="d-none medication-form-storage">
+                                        {% for hidden in formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                        {{ formset.empty_form.name }}
+                                        {{ formset.empty_form.quantity }}
+                                        {{ formset.empty_form.dosage }}
+                                        {{ formset.empty_form.frequency }}
+                                        {{ formset.empty_form.duration_days }}
+                                        {{ formset.empty_form.instructions }}
+                                        {{ formset.empty_form.DELETE }}
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </div>
+                    <div class="col-12 d-flex gap-3">
+                        <button class="btn btn-success" type="submit" data-bs-toggle="tooltip" data-bs-title="Guardar cardex" aria-label="Guardar cardex"><i class="bi bi-floppy"></i></button>
+                        <a class="btn btn-outline-dark" href="{{ return_url }}" data-bs-toggle="tooltip" data-bs-title="Cancelar" aria-label="Cancelar"><i class="bi bi-x-circle"></i></a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="medicationModal" tabindex="-1" aria-labelledby="medicationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h2 class="modal-title h5 mb-0" id="medicationModalLabel">Agregar medicamento</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label" for="modal-medication-name">Medicamento</label>
+                        <input class="form-control" id="modal-medication-name" type="text">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="modal-medication-quantity">Cantidad</label>
+                        <input class="form-control" id="modal-medication-quantity" type="text">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="modal-medication-dosage">Como se toma</label>
+                        <input class="form-control" id="modal-medication-dosage" type="text">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label" for="modal-medication-frequency">Frecuencia</label>
+                        <input class="form-control" id="modal-medication-frequency" type="text">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="modal-medication-duration">Dias</label>
+                        <input class="form-control" id="modal-medication-duration" type="number" min="1">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label" for="modal-medication-instructions">Indicaciones</label>
+                        <input class="form-control" id="modal-medication-instructions" type="text">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                   <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal" data-bs-toggle="tooltip" data-bs-title="Cancelar" aria-label="Cancelar"><i class="bi bi-x-circle"></i></button>
+                   <button type="button" class="btn btn-outline-success" id="save-and-add-medication-button" data-bs-toggle="tooltip" data-bs-title="Guardar y agregar otro" aria-label="Guardar y agregar otro"><i class="bi bi-plus-square"></i></button>
+                   <button type="button" class="btn btn-success" id="save-medication-button" data-bs-toggle="tooltip" data-bs-title="Guardar medicamento" aria-label="Guardar medicamento"><i class="bi bi-check2-circle"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    (() => {
+        const addMedicationButton = document.getElementById('open-medication-modal');
+        const medicationList = document.getElementById('medication-table-body');
+        const template = document.getElementById('empty-medication-form-template');
+        const totalFormsInput = document.getElementById('id_medications-TOTAL_FORMS');
+        const emptyState = document.getElementById('medication-empty-state');
+        const modalElement = document.getElementById('medicationModal');
+        const modalTitle = document.getElementById('medicationModalLabel');
+        const saveMedicationButton = document.getElementById('save-medication-button');
+        const saveAndAddMedicationButton = document.getElementById('save-and-add-medication-button');
+        const modalFields = {
+            name: document.getElementById('modal-medication-name'),
+            quantity: document.getElementById('modal-medication-quantity'),
+            dosage: document.getElementById('modal-medication-dosage'),
+            frequency: document.getElementById('modal-medication-frequency'),
+            duration_days: document.getElementById('modal-medication-duration'),
+            instructions: document.getElementById('modal-medication-instructions'),
+        };
+        let activeMedicationItem = null;
+        const medicationModal = window.bootstrap && modalElement ? new bootstrap.Modal(modalElement) : null;
+
+        if (!addMedicationButton || !medicationList || !template || !totalFormsInput || !modalElement || !saveMedicationButton || !saveAndAddMedicationButton) {
+            return;
+        }
+
+        const initializeTooltips = (scope) => {
+            if (!window.initializeBootstrapTooltips) {
+                   return;
+               }
+            window.initializeBootstrapTooltips(scope);
+           };
+
+        const updateEmptyState = () => {
+            const visibleItems = medicationList.querySelectorAll('.medication-summary-item:not(.d-none)');
+            if (!emptyState) {
+                return;
+            }
+            emptyState.classList.toggle('d-none', visibleItems.length > 0);
+        };
+
+        const getStorageField = (item, suffix) => item.querySelector(`[name$="-${suffix}"]`);
+
+        const syncSummary = (item) => {
+            const nameValue = getStorageField(item, 'name')?.value.trim() || 'Medicamento sin nombre';
+            const quantityValue = getStorageField(item, 'quantity')?.value.trim() || 'Sin cantidad';
+            const dosageValue = getStorageField(item, 'dosage')?.value.trim() || 'Sin dosis';
+            const frequencyValue = getStorageField(item, 'frequency')?.value.trim() || 'Sin frecuencia';
+            const durationValue = getStorageField(item, 'duration_days')?.value.trim() || '0';
+            const instructionsValue = getStorageField(item, 'instructions')?.value.trim() || 'Sin indicaciones adicionales';
+
+            item.querySelector('.medication-summary-name').textContent = nameValue;
+            item.querySelector('.medication-summary-quantity').textContent = quantityValue;
+            item.querySelector('.medication-summary-dose').textContent = dosageValue;
+            item.querySelector('.medication-summary-frequency').textContent = frequencyValue;
+            item.querySelector('.medication-summary-duration').textContent = `${durationValue} dias`;
+            item.querySelector('.medication-summary-instructions').textContent = instructionsValue;
+        };
+
+        const resetModalFields = () => {
+            Object.values(modalFields).forEach((field) => {
+                field.value = '';
+            });
+        };
+
+        const populateModalFromItem = (item) => {
+            modalFields.name.value = getStorageField(item, 'name')?.value || '';
+            modalFields.quantity.value = getStorageField(item, 'quantity')?.value || '';
+            modalFields.dosage.value = getStorageField(item, 'dosage')?.value || '';
+            modalFields.frequency.value = getStorageField(item, 'frequency')?.value || '';
+            modalFields.duration_days.value = getStorageField(item, 'duration_days')?.value || '';
+            modalFields.instructions.value = getStorageField(item, 'instructions')?.value || '';
+        };
+
+        const createMedicationItem = () => {
+            const formIndex = Number.parseInt(totalFormsInput.value, 10);
+            const formHtml = template.innerHTML.replace(/__prefix__/g, String(formIndex));
+            medicationList.insertAdjacentHTML('beforeend', formHtml.trim());
+            totalFormsInput.value = String(formIndex + 1);
+               const item = medicationList.querySelector(`.medication-summary-item[data-form-index="${formIndex}"]`);
+               if (item) {
+                   initializeTooltips(item);
+               }
+               return item;
+        };
+
+        const markItemDeleted = (item) => {
+            const deleteField = getStorageField(item, 'DELETE');
+            if (deleteField) {
+                deleteField.checked = true;
+            }
+            item.classList.add('d-none');
+            updateEmptyState();
+        };
+
+        medicationList.addEventListener('click', (event) => {
+            const editButton = event.target.closest('.edit-medication-button');
+            if (editButton) {
+                const item = medicationList.querySelector(`.medication-summary-item[data-form-index="${editButton.dataset.formIndex}"]`);
+                if (!item) {
+                    return;
+                }
+                activeMedicationItem = item;
+                modalTitle.textContent = 'Editar medicamento';
+                populateModalFromItem(item);
+                return;
+            }
+
+            const removeButton = event.target.closest('.remove-medication-button');
+            if (removeButton) {
+                const item = medicationList.querySelector(`.medication-summary-item[data-form-index="${removeButton.dataset.formIndex}"]`);
+                if (!item) {
+                    return;
+                }
+                markItemDeleted(item);
+            }
+        });
+
+        addMedicationButton.addEventListener('click', () => {
+            activeMedicationItem = null;
+            modalTitle.textContent = 'Agregar medicamento';
+            resetModalFields();
+        });
+
+        const persistMedication = (keepOpenForAnother) => {
+            if (!modalFields.name.value.trim()) {
+                modalFields.name.focus();
+                return;
+            }
+
+            const isEditing = Boolean(activeMedicationItem);
+            const item = activeMedicationItem || createMedicationItem();
+            getStorageField(item, 'DELETE').checked = false;
+            getStorageField(item, 'name').value = modalFields.name.value.trim();
+            getStorageField(item, 'quantity').value = modalFields.quantity.value.trim();
+            getStorageField(item, 'dosage').value = modalFields.dosage.value.trim();
+            getStorageField(item, 'frequency').value = modalFields.frequency.value.trim();
+            getStorageField(item, 'duration_days').value = modalFields.duration_days.value.trim();
+            getStorageField(item, 'instructions').value = modalFields.instructions.value.trim();
+
+            item.classList.remove('d-none');
+            syncSummary(item);
+            updateEmptyState();
+
+            if (keepOpenForAnother && !isEditing) {
+                activeMedicationItem = null;
+                modalTitle.textContent = 'Agregar medicamento';
+                resetModalFields();
+                modalFields.name.focus();
+                return;
+            }
+
+            if (medicationModal) {
+                medicationModal.hide();
+            }
+        };
+
+        saveMedicationButton.addEventListener('click', () => {
+            persistMedication(false);
+        });
+
+        saveAndAddMedicationButton.addEventListener('click', () => {
+            persistMedication(true);
+        });
+
+         initializeTooltips(document);
+         updateEmptyState();
+    })();
+</script>
+{% endblock %}

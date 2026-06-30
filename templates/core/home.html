@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Inicio | Agenda Consultorio{% endblock %}
+{% block content %}
+<section class="hero-card rounded-4 p-4 p-lg-5 mb-4">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <span class="app-badge mb-3">Agenda en linea para consultorio</span>
+            <h1 class="display-5 fw-semibold mb-3">Citas ordenadas, confirmacion por medico y cardex clinico en un solo lugar.</h1>
+            <p class="lead text-secondary mb-4">El paciente se registra con su correo, verifica su cuenta y solicita su cita en bloques exactos de tiempo. El medico administra horarios, confirma solicitudes y registra evolucion clinica por consulta.</p>
+            <div class="d-flex flex-column flex-sm-row gap-3">
+                <a class="btn btn-primary btn-lg" href="{% url 'users:register' %}">Crear cuenta de paciente</a>
+                <a class="btn btn-outline-dark btn-lg" href="{% url 'users:login' %}">Entrar al sistema</a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="info-panel rounded-4 p-4">
+                <h2 class="h4 mb-3">Flujo principal</h2>
+                <ol class="mb-0 ps-3">
+                    <li>Registro del paciente y verificacion por correo.</li>
+                    <li>Solicitud de cita con alternativas si no hay espacio.</li>
+                    <li>Revision del medico por correo y desde su panel.</li>
+                    <li>Calendario mensual y cardex por cita atendida.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if doctor_profile %}
+<section class="row g-4 align-items-stretch">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4 text-center">
+                {% if doctor_profile.photo %}
+                    <img src="{{ doctor_profile.photo.url }}" alt="Foto del medico" class="doctor-photo mb-3">
+                {% else %}
+                    <div class="doctor-photo doctor-photo-placeholder mb-3 mx-auto">Dr</div>
+                {% endif %}
+                <h2 class="h4 mb-1">{{ doctor_profile.full_name }}</h2>
+                <p class="text-secondary mb-2">{{ doctor_profile.specialties|default:'Especialidades por definir' }}</p>
+                {% if doctor_profile.professional_license %}<p class="small mb-0">Cedula: {{ doctor_profile.professional_license }}</p>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4 p-lg-5">
+                <h2 class="h4 mb-3">Atencion medica</h2>
+                {% if doctor_profile.profile_bio %}
+                    <p class="text-secondary">{{ doctor_profile.profile_bio }}</p>
+                {% else %}
+                    <p class="text-secondary">Consulta medica con agenda en linea, confirmacion de citas y seguimiento clinico.</p>
+                {% endif %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="soft-panel rounded-4 p-3 h-100">
+                            <strong class="d-block mb-1">Consultorio</strong>
+                            <span class="text-secondary">{{ doctor_profile.office_name|default:'Consultorio principal' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="soft-panel rounded-4 p-3 h-100">
+                            <strong class="d-block mb-1">Ubicacion</strong>
+                            <span class="text-secondary">{{ doctor_profile.office_address|default:'Ubicacion por definir' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

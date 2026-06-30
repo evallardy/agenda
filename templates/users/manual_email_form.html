@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Enviar correo | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-9">
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-4">
+                <div class="card hero-aside rounded-4 h-100">
+                    <div class="card-body p-4 p-lg-5 d-flex flex-column justify-content-center">
+                        <span class="section-kicker">Comunicacion</span>
+                        <h1 class="h3 mb-3">Enviar correo manual desde el sistema.</h1>
+                        <p class="text-secondary mb-0">Utiliza esta pantalla para hacer pruebas locales o enviar mensajes puntuales desde la configuracion SMTP activa.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="card auth-card rounded-4 h-100">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                            <div>
+                                <span class="section-kicker">Correo manual</span>
+                                <h2 class="h3 mb-1">Nuevo mensaje</h2>
+                                <p class="text-secondary mb-0">El mensaje se enviara usando el proveedor configurado en el entorno actual.</p>
+                            </div>
+                            <a class="btn btn-outline-dark btn-sm icon-action-btn" href="{% url 'core:dashboard' %}" data-bs-toggle="tooltip" data-bs-title="Volver al panel" aria-label="Volver al panel"><i class="bi bi-arrow-left"></i></a>
+                        </div>
+                        <form method="post" class="row g-3">
+                            {% csrf_token %}
+                            {% for error in form.non_field_errors %}
+                                <div class="col-12">
+                                    <div class="alert alert-danger mb-0">{{ error }}</div>
+                                </div>
+                            {% endfor %}
+                            {% for field in form %}
+                                <div class="col-12">
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endfor %}
+                            <div class="col-12 d-flex flex-column flex-sm-row gap-3 pt-2">
+                                <button class="btn btn-primary icon-action-btn" type="submit" data-bs-toggle="tooltip" data-bs-title="Enviar correo" aria-label="Enviar correo"><i class="bi bi-send"></i></button>
+                                <a class="btn btn-outline-dark icon-action-btn" href="{% url 'core:dashboard' %}" data-bs-toggle="tooltip" data-bs-title="Cancelar" aria-label="Cancelar"><i class="bi bi-x-circle"></i></a>
+                            </div>
+                        </form>
+                        <div class="soft-panel rounded-4 p-4 mt-4">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                <div>
+                                    <span class="section-kicker">Bitacora</span>
+                                    <h3 class="h5 mb-0">Ultimos correos enviados</h3>
+                                </div>
+                            </div>
+                            {% if recent_email_logs %}
+                                <div class="table-responsive">
+                                    <table class="table align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Destino</th>
+                                                <th>Asunto</th>
+                                                <th>Tipo</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for email_log in recent_email_logs %}
+                                                <tr>
+                                                    <td>{{ email_log.created_at|date:'d/m/Y H:i' }}</td>
+                                                    <td>{{ email_log.recipient }}</td>
+                                                    <td>{{ email_log.subject }}</td>
+                                                    <td>{{ email_log.context_type|default:'manual' }}</td>
+                                                    <td>
+                                                        {% if email_log.status == 'sent' %}
+                                                            <span class="badge text-bg-success">Enviado</span>
+                                                        {% else %}
+                                                            <span class="badge text-bg-danger">Fallido</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-secondary mb-0">Aun no hay correos registrados para este usuario.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

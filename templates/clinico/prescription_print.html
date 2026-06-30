@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Receta | Agenda Consultorio</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #1f2937; margin: 2rem; }
+        .sheet { max-width: 900px; margin: 0 auto; border: 1px solid #dbe4f0; border-radius: 18px; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+        .muted { color: #6b7280; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { border: 1px solid #dbe4f0; padding: 0.75rem; text-align: left; vertical-align: top; }
+        th { background: #eff6ff; }
+        .actions { margin-top: 1.5rem; }
+        @media print { .actions { display: none; } body { margin: 0; } .sheet { border: none; } }
+    </style>
+</head>
+<body>
+    <div class="sheet">
+        <div class="header">
+            <div>
+                <h1 style="margin:0;">Receta medica</h1>
+                <p class="muted" style="margin:0.4rem 0 0;">{{ appointment.doctor.full_name }}</p>
+                <p class="muted" style="margin:0.2rem 0 0;">{{ appointment.doctor.specialties|default:'Especialidad no registrada' }}</p>
+            </div>
+            <div style="text-align:right;">
+                <p style="margin:0;"><strong>Fecha:</strong> {{ appointment.date|date:'d/m/Y' }}</p>
+                <p style="margin:0.4rem 0 0;"><strong>Paciente:</strong> {{ appointment.patient.full_name }}</p>
+                <p style="margin:0.4rem 0 0;"><strong>Correo:</strong> {{ appointment.patient.email }}</p>
+            </div>
+        </div>
+
+        <div>
+            <p><strong>Sintomas:</strong> {{ record.symptoms|default:'Sin sintomas registrados'|linebreaksbr }}</p>
+            <p><strong>Diagnostico:</strong> {{ record.diagnosis|default:'Sin diagnostico registrado'|linebreaksbr }}</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Medicamento</th>
+                    <th>Cantidad</th>
+                    <th>Como se toma</th>
+                    <th>Cada cuando</th>
+                    <th>Por cuanto tiempo</th>
+                    <th>Indicaciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for medication in medications %}
+                    <tr>
+                        <td>{{ medication.name }}</td>
+                        <td>{{ medication.quantity }}</td>
+                        <td>{{ medication.dosage }}</td>
+                        <td>{{ medication.frequency }}</td>
+                        <td>{{ medication.duration_days }} dias</td>
+                        <td>{{ medication.instructions|default:'Sin indicaciones adicionales' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="actions">
+            <a href="{% url 'clinico:prescription-pdf' appointment.pk %}" target="_blank">Descargar PDF</a>
+            <button type="button" onclick="window.print()">Imprimir receta</button>
+        </div>
+    </div>
+</body>
+</html>

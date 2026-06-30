@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Solicitar cita | Agenda Consultorio{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        {% if doctor_profile %}
+        <div class="card panel-surface mb-4">
+            <div class="card-body p-4">
+                <span class="section-kicker">Atencion medica</span>
+                <div class="d-flex gap-3 align-items-start">
+                    {% if doctor_profile.photo %}
+                        <img src="{{ doctor_profile.photo.url }}" alt="Foto del medico" class="doctor-photo doctor-photo-sm flex-shrink-0">
+                    {% else %}
+                        <div class="doctor-photo doctor-photo-sm doctor-photo-placeholder flex-shrink-0">Dr</div>
+                    {% endif %}
+                    <div>
+                        <h2 class="h5 mb-1">{{ doctor_profile.full_name }}</h2>
+                        <p class="text-secondary mb-2">{{ doctor_profile.specialties|default:'Especialidades por definir' }}</p>
+                        {% if doctor_profile.office_name %}<div class="small">{{ doctor_profile.office_name }}</div>{% endif %}
+                        {% if doctor_profile.office_address %}<div class="small text-secondary">{{ doctor_profile.office_address }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="card panel-surface h-100">
+            <div class="card-body p-4 p-lg-5">
+                <span class="section-kicker">Solicitud</span>
+                <h1 class="h3 mb-3">Solicitar cita</h1>
+                <p class="text-secondary">Selecciona el dia que prefieres. Si no hay espacio, te mostraremos tres fechas posteriores con horarios disponibles.</p>
+                <form method="post" class="row g-3">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="col-12">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    <div class="col-12 d-grid">
+                        <button class="btn btn-primary" type="submit">Buscar disponibilidad</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card panel-surface h-100">
+            <div class="card-body p-4 p-lg-5">
+                {% if selected_date %}
+                    <span class="section-kicker">Disponibilidad</span>
+                    <h2 class="h4 mb-3">Disponibilidad para {{ selected_date|date:'d/m/Y' }}</h2>
+                    {% if available_slots %}
+                        <div class="d-grid gap-2">
+                            {% for slot in available_slots %}
+                                <form method="post" action="{% url 'citas:patient-create' %}" class="slot-card d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 rounded-4 p-3">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="appointment_date" value="{{ selected_date|date:'Y-m-d' }}">
+                                    <input type="hidden" name="start_time" value="{{ slot.0|time:'H:i' }}">
+                                    <input type="hidden" name="reason" value="{{ selected_reason }}">
+                                    <div>
+                                        <strong>{{ slot.0|time:'H:i' }} - {{ slot.1|time:'H:i' }}</strong>
+                                        {% if selected_reason %}<div class="small text-secondary">Motivo: {{ selected_reason }}</div>{% endif %}
+                                    </div>
+                                    <button class="btn btn-success" type="submit">Solicitar este horario</button>
+                                </form>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">No hay espacios libres ese dia.</div>
+                        {% if suggestions %}
+                            <h3 class="h5 mb-3">Alternativas sugeridas</h3>
+                            <div class="d-grid gap-3">
+                                {% for suggested_date, slots in suggestions %}
+                                    <div class="context-card rounded-4 p-3">
+                                        <strong class="d-block mb-2">{{ suggested_date|date:'d/m/Y' }}</strong>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            {% for slot in slots %}
+                                                <form method="post" action="{% url 'citas:patient-create' %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="appointment_date" value="{{ suggested_date|date:'Y-m-d' }}">
+                                                    <input type="hidden" name="start_time" value="{{ slot.0|time:'H:i' }}">
+                                                    <input type="hidden" name="reason" value="{{ selected_reason }}">
+                                                    <button class="btn btn-outline-primary btn-sm" type="submit">{{ slot.0|time:'H:i' }} - {{ slot.1|time:'H:i' }}</button>
+                                                </form>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-secondary mb-0">No encontramos disponibilidad cercana porque aun no hay horarios cargados por el medico.</p>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <div class="empty-state h-100 d-flex align-items-center justify-content-center text-center p-4 rounded-4">
+                        <div>
+                            <span class="section-kicker mb-2">Busqueda</span>
+                            <h2 class="h4 mb-2">Busca un dia para tu cita</h2>
+                            <p class="text-secondary mb-0">Los horarios se mostraran en bloques exactos segun la duracion configurada por el medico.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
