@@ -84,6 +84,8 @@ gunicorn agenda.wsgi:application --config gunicorn.conf.py
 
 Tambien puedes usar [Procfile](Procfile) si tu plataforma lo soporta.
 
+Para deploy en un servidor Linux con el script compartido del equipo, revisa [DEPLOY.md](DEPLOY.md).
+
 ## Comandos utiles
 
 Aplicar migraciones:

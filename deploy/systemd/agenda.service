@@ -1,0 +1,16 @@
+[Unit]
+Description=Gunicorn for agenda
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/www/agenda/app
+Environment="DJANGO_ENV=production"
+Environment="DJANGO_ENV_FILE=.env.production"
+ExecStart=/srv/www/agenda/app/deploy/gunicorn_start.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
