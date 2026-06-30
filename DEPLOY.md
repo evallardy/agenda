@@ -1,44 +1,33 @@
 # Deploy en servidor
 
-Este repositorio incluye un paquete de deploy pensado para trabajar con el `crea_proyecto.sh` que ya tienes en el servidor.
+Este repositorio incluye un paquete de deploy compatible con tu shell de despliegue basado en Supervisor y Nginx.
 
 ## Archivos incluidos
 
-- `deploy/project.conf.example`: variables del proyecto para que el script del servidor no tenga que inferir nombres o rutas.
-- `deploy/post_deploy.sh`: instala dependencias de produccion, ejecuta migraciones, `collectstatic` y `check --deploy`.
-- `deploy/gunicorn_start.sh`: arranque de Gunicorn para systemd.
-- `deploy/systemd/agenda.service`: plantilla de servicio systemd.
-- `deploy/nginx/agenda.conf`: plantilla base de Nginx.
+- `agenda/settings_prod.py`: settings compatibles con las variables `BAR_*` que genera tu shell.
+- `deploy/gunicorn.sh` y `deploy/gunicorn_start.sh`: arranque de Gunicorn leyendo `deploy/.env.deploy`.
+- `deploy/supervisor/bar.conf`: plantilla que tu shell renderiza hacia `/etc/supervisor/conf.d/`.
+- `deploy/nginx/bar.conf`: plantilla que tu shell renderiza hacia `/etc/nginx/sites-available/`.
 
 ## Preparacion del repo
 
-1. Copia `deploy/project.conf.example` a `deploy/project.conf` y ajusta dominio, usuario, rutas y correo.
-2. Copia `.env.production.example` a `.env.production` y completa credenciales reales.
-3. Asegurate de que el servidor tenga Python 3, `venv`, Nginx y systemd.
+1. Ejecuta tu shell con el nombre del repo `agenda`.
+2. Edita `deploy/.env.deploy` cuando el script deje los placeholders obligatorios.
+3. Reejecuta el shell para completar migraciones, `collectstatic` y reinicio.
 
-## Flujo esperado con `crea_proyecto.sh`
+## Contrato que espera tu shell
 
-Este proyecto asume que el script del servidor puede:
+Este proyecto ya expone exactamente los archivos que tu shell usa:
 
-1. Clonar o actualizar el repositorio en `${APP_SOURCE_DIR}`.
-2. Leer `deploy/project.conf`.
-3. Ejecutar `deploy/post_deploy.sh`.
-4. Instalar o enlazar `deploy/systemd/agenda.service`.
-5. Instalar o enlazar `deploy/nginx/agenda.conf`.
-
-Si tu version de `crea_proyecto.sh` usa otros nombres, adapta solo el mapeo en el servidor; los artefactos del proyecto ya estan listos.
+1. `agenda.settings_prod` para `python manage.py ... --settings=agenda.settings_prod`
+2. `deploy/gunicorn.sh`
+3. `deploy/gunicorn_start.sh`
+4. `deploy/supervisor/bar.conf`
+5. `deploy/nginx/bar.conf`
+6. Variables `BAR_*` desde `deploy/.env.deploy`
 
 ## Comandos manuales equivalentes
 
 ```bash
-cp deploy/project.conf.example deploy/project.conf
-cp .env.production.example .env.production
-bash deploy/post_deploy.sh
-sudo cp deploy/systemd/agenda.service /etc/systemd/system/agenda.service
-sudo cp deploy/nginx/agenda.conf /etc/nginx/sites-available/agenda.conf
-sudo ln -s /etc/nginx/sites-available/agenda.conf /etc/nginx/sites-enabled/agenda.conf
-sudo systemctl daemon-reload
-sudo systemctl enable --now agenda
-sudo nginx -t
-sudo systemctl reload nginx
+sudo bash deploy/tu_shell.sh produccion agenda agenda.tu-dominio.com usuario_supervisor
 ```
